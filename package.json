@@ -1,0 +1,16 @@
+{
+  "name": "advchecklists",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace server",
+    "dev:client": "npm run dev --workspace client",
+    "build:server": "npm run build --workspace server",
+    "build:client": "npm run build --workspace client",
+    "test:server": "npm run test --workspace server"
+  }
+}

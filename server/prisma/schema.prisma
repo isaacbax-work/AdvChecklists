@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite has no native enum support, so the roles/types/statuses below are
+// plain strings. Valid values are enforced in application code (see
+// src/routes and src/services) rather than at the database layer:
+//   Role:            OWNER | EDITOR | FILLER
+//   FieldType:       CHECKBOX | BUTTON | DATE | TEXT
+//   InstanceStatus:  IN_PROGRESS | COMPLETED
+//   ActionStatus:    SUCCESS | FAILED
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+
+  ownedTemplates     Template[]           @relation("TemplateOwner")
+  collaborations     TemplateCollaborator[]
+  createdVersions    TemplateVersion[]
+  createdInstances   Instance[]           @relation("InstanceCreatedBy")
+  fieldValueUpdates  FieldValue[]
+  actionLogs         ActionLog[]
+}
+
+model Template {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  ownerId     String
+  owner       User     @relation("TemplateOwner", fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions      TemplateVersion[]
+  collaborators TemplateCollaborator[]
+  instances     Instance[]
+}
+
+model TemplateVersion {
+  id                   String   @id @default(uuid())
+  templateId           String
+  template             Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  versionNumber        Int
+  documentFilename     String
+  documentOriginalName String
+  documentMimeType     String
+  createdById          String
+  createdBy            User     @relation(fields: [createdById], references: [id])
+  createdAt            DateTime @default(now())
+
+  fields    Field[]
+  instances Instance[]
+
+  @@unique([templateId, versionNumber])
+}
+
+model Field {
+  id                String          @id @default(uuid())
+  templateVersionId String
+  templateVersion   TemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Cascade)
+  type              String
+  label             String
+  page              Int             @default(1)
+  x                 Float
+  y                 Float
+  width             Float
+  height            Float
+  order             Int             @default(0)
+  config            String          @default("{}")
+
+  fieldValues FieldValue[]
+  actionLogs  ActionLog[]
+}
+
+model TemplateCollaborator {
+  id         String   @id @default(uuid())
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  role       String
+  invitedAt  DateTime @default(now())
+
+  @@unique([templateId, userId])
+}
+
+model Instance {
+  id                String          @id @default(uuid())
+  templateId        String
+  template          Template        @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateVersionId String
+  templateVersion   TemplateVersion @relation(fields: [templateVersionId], references: [id])
+  title             String
+  status            String          @default("IN_PROGRESS")
+  createdById       String
+  createdBy         User            @relation("InstanceCreatedBy", fields: [createdById], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  fieldValues FieldValue[]
+  actionLogs  ActionLog[]
+}
+
+model FieldValue {
+  id           String   @id @default(uuid())
+  instanceId   String
+  instance     Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  fieldId      String
+  field        Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  value        String?
+  updatedById  String?
+  updatedBy    User?    @relation(fields: [updatedById], references: [id])
+  updatedAt    DateTime @updatedAt
+
+  @@unique([instanceId, fieldId])
+}
+
+model ActionLog {
+  id            String       @id @default(uuid())
+  instanceId    String
+  instance      Instance     @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  fieldId       String?
+  field         Field?       @relation(fields: [fieldId], references: [id])
+  actionType    String
+  status        String
+  detail        String?
+  performedById String?
+  performedBy   User?        @relation(fields: [performedById], references: [id])
+  performedAt   DateTime     @default(now())
+}
