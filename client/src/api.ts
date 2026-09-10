@@ -2,8 +2,15 @@ export type FieldType = "CHECKBOX" | "BUTTON" | "DATE" | "TEXT";
 export type Role = "OWNER" | "EDITOR" | "FILLER";
 export type InstanceStatus = "IN_PROGRESS" | "COMPLETED";
 
+export interface EmailAttachment {
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size?: number;
+}
+
 export type ActionDef =
-  | { type: "send_email"; to: string; subject: string; body: string }
+  | { type: "send_email"; to: string; subject: string; body: string; attachments?: EmailAttachment[] }
   | { type: "set_date"; targetFieldId: string; value?: string }
   | { type: "mark_complete" };
 
@@ -189,6 +196,12 @@ export const api = {
       { method: "PATCH", body: JSON.stringify({ value }) }
     ),
   getInstanceHistory: (id: string) => request<{ history: HistoryEntry[] }>(`/api/instances/${id}/history`),
+
+  uploadAttachment: (file: File) => {
+    const form = new FormData();
+    form.set("file", file);
+    return request<EmailAttachment>("/api/uploads/attachments", { method: "POST", body: form });
+  },
 };
 
 export { ApiError };

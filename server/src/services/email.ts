@@ -4,6 +4,7 @@ export interface SendEmailInput {
   to: string;
   subject: string;
   body: string;
+  attachments?: { filename: string; path: string }[];
 }
 
 export interface SendEmailResult {
@@ -44,14 +45,18 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       to: input.to,
       subject: input.subject,
       text: input.body,
+      attachments: input.attachments,
     });
+    const attachmentNote = input.attachments?.length
+      ? ` attachments=[${input.attachments.map((a) => a.filename).join(", ")}]`
+      : "";
     if (usingRealSmtp) {
-      return { ok: true, detail: `Email sent to ${input.to} (messageId=${info.messageId})` };
+      return { ok: true, detail: `Email sent to ${input.to} (messageId=${info.messageId})${attachmentNote}` };
     }
-    console.log(`[dev email] to=${input.to} subject=${JSON.stringify(input.subject)}`);
+    console.log(`[dev email] to=${input.to} subject=${JSON.stringify(input.subject)}${attachmentNote}`);
     return {
       ok: true,
-      detail: `SMTP not configured; email logged instead of sent. to=${input.to} subject=${input.subject}`,
+      detail: `SMTP not configured; email logged instead of sent. to=${input.to} subject=${input.subject}${attachmentNote}`,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

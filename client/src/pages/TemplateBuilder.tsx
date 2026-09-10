@@ -78,6 +78,7 @@ export function TemplateBuilder() {
   const isOwner = template.myRole === "OWNER";
   const selectedField = fields.find((f) => f.id === selectedId) ?? null;
   const dateFieldOptions = fields.filter((f) => f.type === "DATE").map((f) => ({ id: f.id, label: f.label }));
+  const fieldOptions = fields.map((f) => ({ id: f.id, label: f.label }));
 
   const addField = (xPercent: number, yPercent: number) => {
     if (!canEdit) return;
@@ -205,6 +206,7 @@ export function TemplateBuilder() {
                 key={selectedField.id}
                 field={selectedField}
                 dateFieldOptions={dateFieldOptions.filter((d) => d.id !== selectedField.id)}
+                fieldOptions={fieldOptions}
                 onChangeType={changeType}
                 onPatch={updateSelected}
                 onDelete={removeSelected}
@@ -234,12 +236,14 @@ export function TemplateBuilder() {
 function FieldEditor({
   field,
   dateFieldOptions,
+  fieldOptions,
   onChangeType,
   onPatch,
   onDelete,
 }: {
   field: FieldDef;
   dateFieldOptions: { id: string; label: string }[];
+  fieldOptions: { id: string; label: string }[];
   onChangeType: (type: FieldType) => void;
   onPatch: (patch: Partial<FieldDef>) => void;
   onDelete: () => void;
@@ -285,6 +289,7 @@ function FieldEditor({
           <ActionListEditor
             actions={(field.config as CheckboxConfig).checkedActions ?? []}
             dateFieldOptions={dateFieldOptions}
+            fieldOptions={fieldOptions}
             onChange={(actions) =>
               onPatch({ config: { ...(field.config as CheckboxConfig), checkedActions: actions } })
             }
@@ -293,6 +298,7 @@ function FieldEditor({
           <ActionListEditor
             actions={(field.config as CheckboxConfig).uncheckedActions ?? []}
             dateFieldOptions={dateFieldOptions}
+            fieldOptions={fieldOptions}
             onChange={(actions) =>
               onPatch({ config: { ...(field.config as CheckboxConfig), uncheckedActions: actions } })
             }
@@ -306,6 +312,7 @@ function FieldEditor({
           <ActionListEditor
             actions={(field.config as ButtonConfig).actions ?? []}
             dateFieldOptions={dateFieldOptions}
+            fieldOptions={fieldOptions}
             onChange={(actions) => onPatch({ config: { actions } })}
           />
         </div>

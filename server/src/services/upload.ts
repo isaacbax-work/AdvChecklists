@@ -27,3 +27,28 @@ export const upload = multer({
     cb(null, true);
   },
 });
+
+// Broader allow-list for files attached to outgoing emails — these aren't
+// rendered as a checklist document, so office/text/archive formats are fine.
+const ALLOWED_ATTACHMENT_MIME = new Set([
+  ...ALLOWED_MIME,
+  "text/plain",
+  "text/csv",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/zip",
+]);
+
+export const attachmentUpload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!ALLOWED_ATTACHMENT_MIME.has(file.mimetype)) {
+      cb(new Error("Unsupported attachment type."));
+      return;
+    }
+    cb(null, true);
+  },
+});

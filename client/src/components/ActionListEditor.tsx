@@ -1,9 +1,11 @@
-import type { ActionDef } from "../api";
+import { useState } from "react";
+import { api, ApiError, type ActionDef, type EmailAttachment } from "../api";
 
 interface Props {
   actions: ActionDef[];
   onChange: (actions: ActionDef[]) => void;
   dateFieldOptions: { id: string; label: string }[];
+  fieldOptions: { id: string; label: string }[];
 }
 
 function defaultForType(type: ActionDef["type"]): ActionDef {
@@ -12,7 +14,7 @@ function defaultForType(type: ActionDef["type"]): ActionDef {
   return { type: "mark_complete" };
 }
 
-export function ActionListEditor({ actions, onChange, dateFieldOptions }: Props) {
+export function ActionListEditor({ actions, onChange, dateFieldOptions, fieldOptions }: Props) {
   const update = (index: number, next: ActionDef) => {
     const copy = actions.slice();
     copy[index] = next;
@@ -26,24 +28,11 @@ export function ActionListEditor({ actions, onChange, dateFieldOptions }: Props)
       {actions.map((action, i) => (
         <div className="action-row" key={i}>
           {action.type === "send_email" && (
-            <div className="action-fields">
-              <span className="action-badge">Send email</span>
-              <input
-                placeholder="To (email address)"
-                value={action.to}
-                onChange={(e) => update(i, { ...action, to: e.target.value })}
-              />
-              <input
-                placeholder="Subject (supports {{today}}, {{instanceTitle}}, {{fieldLabel}})"
-                value={action.subject}
-                onChange={(e) => update(i, { ...action, subject: e.target.value })}
-              />
-              <textarea
-                placeholder="Body"
-                value={action.body}
-                onChange={(e) => update(i, { ...action, body: e.target.value })}
-              />
-            </div>
+            <SendEmailFields
+              action={action}
+              fieldOptions={fieldOptions}
+              onChange={(next) => update(i, next)}
+            />
           )}
           {action.type === "set_date" && (
             <div className="action-fields">
@@ -82,6 +71,105 @@ export function ActionListEditor({ actions, onChange, dateFieldOptions }: Props)
         <button type="button" onClick={() => add("mark_complete")}>
           + Mark complete
         </button>
+      </div>
+    </div>
+  );
+}
+
+function SendEmailFields({
+  action,
+  fieldOptions,
+  onChange,
+}: {
+  action: Extract<ActionDef, { type: "send_email" }>;
+  fieldOptions: { id: string; label: string }[];
+  onChange: (next: Extract<ActionDef, { type: "send_email" }>) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const insertIntoBody = (placeholder: string) => {
+    onChange({ ...action, body: `${action.body}${action.body && !action.body.endsWith(" ") ? " " : ""}${placeholder}` });
+  };
+
+  const addAttachment = async (file: File) => {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const uploaded = await api.uploadAttachment(file);
+      onChange({ ...action, attachments: [...(action.attachments ?? []), uploaded] });
+    } catch (err) {
+      setUploadError(err instanceof ApiError ? err.message : "Failed to upload attachment");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAttachment = (attachment: EmailAttachment) => {
+    onChange({ ...action, attachments: (action.attachments ?? []).filter((a) => a.filename !== attachment.filename) });
+  };
+
+  return (
+    <div className="action-fields">
+      <span className="action-badge">Send email</span>
+      <input
+        placeholder="To (email address, or {{field:Label}} to pull it from a text field)"
+        value={action.to}
+        onChange={(e) => onChange({ ...action, to: e.target.value })}
+      />
+      <input
+        placeholder="Subject (supports {{today}}, {{instanceTitle}}, {{fieldLabel}}, {{field:Label}})"
+        value={action.subject}
+        onChange={(e) => onChange({ ...action, subject: e.target.value })}
+      />
+      <textarea
+        placeholder="Body"
+        value={action.body}
+        onChange={(e) => onChange({ ...action, body: e.target.value })}
+      />
+
+      {fieldOptions.length > 0 && (
+        <label className="hint">
+          Insert a filled-in field's value into the body
+          <select
+            value=""
+            onChange={(e) => {
+              if (e.target.value) insertIntoBody(`{{field:${e.target.value}}}`);
+              e.target.value = "";
+            }}
+          >
+            <option value="">Choose a field…</option>
+            {fieldOptions.map((f) => (
+              <option key={f.id} value={f.label}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      <div className="attachment-list">
+        {(action.attachments ?? []).map((a) => (
+          <div className="attachment-row" key={a.filename}>
+            <span>{a.originalName}</span>
+            <button type="button" className="link-danger" onClick={() => removeAttachment(a)}>
+              Remove
+            </button>
+          </div>
+        ))}
+        <label className="attachment-add">
+          {uploading ? "Uploading…" : "+ Attach a file"}
+          <input
+            type="file"
+            disabled={uploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) addAttachment(file);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        {uploadError && <div className="error">{uploadError}</div>}
       </div>
     </div>
   );

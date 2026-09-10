@@ -326,6 +326,31 @@ label {
   font-size: 0.75rem;
   padding: 0.35rem 0.6rem;
 }
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+}
+.attachment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+}
+.attachment-add {
+  font-size: 0.75rem;
+  color: var(--accent);
+  cursor: pointer;
+  width: fit-content;
+}
+.attachment-add input[type="file"] {
+  display: none;
+}
 
 .checkbox-row {
   flex-direction: row;
