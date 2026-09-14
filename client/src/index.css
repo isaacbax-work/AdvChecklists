@@ -226,7 +226,10 @@ label {
   border: none;
 }
 .doc-pdf {
-  pointer-events: auto;
+  /* Keep this non-interactive like the image case — the browser's native PDF
+     viewer would otherwise swallow clicks meant for field placement, and only
+     page 1 is ever used for field coordinates anyway (see README). */
+  pointer-events: none;
 }
 
 .doc-field {
