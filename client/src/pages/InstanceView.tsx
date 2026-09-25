@@ -113,6 +113,14 @@ export function InstanceView() {
     );
   };
 
+  const formatValueForSummary = (field: FieldDef): string => {
+    const raw = instance.values[field.id]?.value ?? null;
+    if (raw === null) return "—";
+    if (field.type === "CHECKBOX") return raw === "true" ? "Yes" : "No";
+    if (field.type === "BUTTON") return raw === "true" ? "Pressed" : "—";
+    return raw;
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -126,12 +134,15 @@ export function InstanceView() {
             {instance.createdBy?.name}
           </p>
         </div>
+        <div className="header-actions">
+          <button onClick={() => window.print()}>Print / Save as PDF</button>
+        </div>
       </div>
 
       {error && <div className="error">{error}</div>}
 
       <div className="builder-layout">
-        <div className="builder-canvas-col">
+        <div className="builder-canvas-col printable">
           {instance.document && (
             <DocumentCanvas
               documentUrl={instance.document.url}
@@ -140,6 +151,31 @@ export function InstanceView() {
               renderField={renderField}
             />
           )}
+          <section className="print-only card print-summary">
+            <h2>{instance.title}</h2>
+            <p className="muted small">
+              {instance.status} · started by {instance.createdBy?.name} on{" "}
+              {new Date(instance.createdAt).toLocaleString()}
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {instance.fields
+                  ?.filter((f) => f.type !== "BUTTON")
+                  .map((f) => (
+                    <tr key={f.id}>
+                      <td>{f.label}</td>
+                      <td>{formatValueForSummary(f)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </section>
         </div>
         <div className="builder-sidebar">
           <section className="card">

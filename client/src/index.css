@@ -534,3 +534,39 @@ td {
     border-color: #6b2530;
   }
 }
+
+.print-only {
+  display: none;
+}
+.print-summary {
+  margin-top: 1rem;
+}
+.print-summary table {
+  width: 100%;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable,
+  .printable * {
+    visibility: visible;
+  }
+  .printable {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+  .print-only {
+    display: block;
+  }
+  .doc-page {
+    break-inside: avoid;
+    border: none;
+  }
+  .print-summary {
+    break-before: page;
+  }
+}
