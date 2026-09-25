@@ -28,6 +28,9 @@ export interface DateConfig {
 export interface SelectConfig {
   options?: string[];
 }
+export interface TextConfig {
+  useAsTitle?: boolean;
+}
 
 export interface FieldDef {
   id: string;
@@ -39,7 +42,7 @@ export interface FieldDef {
   width: number;
   height: number;
   order: number;
-  config: CheckboxConfig | ButtonConfig | DateConfig | SelectConfig | Record<string, unknown>;
+  config: CheckboxConfig | ButtonConfig | DateConfig | SelectConfig | TextConfig | Record<string, unknown>;
 }
 
 export interface TemplateVersion {
@@ -184,6 +187,7 @@ export const api = {
     request<void>(`/api/templates/${id}/collaborators/${userId}`, { method: "DELETE" }),
   listTemplateInstances: (id: string) =>
     request<{ instances: InstanceSummary[] }>(`/api/templates/${id}/instances`),
+  deleteTemplate: (id: string) => request<void>(`/api/templates/${id}`, { method: "DELETE" }),
 
   createInstance: (templateId: string, title: string, templateVersionId?: string) =>
     request<InstanceSummary>("/api/instances", {
@@ -201,6 +205,7 @@ export const api = {
       { method: "PATCH", body: JSON.stringify({ value }) }
     ),
   getInstanceHistory: (id: string) => request<{ history: HistoryEntry[] }>(`/api/instances/${id}/history`),
+  deleteInstance: (id: string) => request<void>(`/api/instances/${id}`, { method: "DELETE" }),
 
   uploadAttachment: (file: File) => {
     const form = new FormData();

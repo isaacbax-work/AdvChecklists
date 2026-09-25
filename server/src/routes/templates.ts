@@ -184,6 +184,16 @@ templatesRouter.get("/:id", async (req: AuthedRequest, res) => {
   });
 });
 
+// Delete a template entirely — every version, field, collaborator, checklist run,
+// and action log under it goes with it (enforced by cascading foreign keys).
+templatesRouter.delete("/:id", async (req: AuthedRequest, res) => {
+  const role = await getRole(req.params.id, req.userId!);
+  if (!roleAtLeast(role, "OWNER")) return res.status(403).json({ error: "Access denied" });
+
+  await prisma.template.delete({ where: { id: req.params.id } });
+  res.status(204).end();
+});
+
 const updateFieldsSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().nullable().optional(),

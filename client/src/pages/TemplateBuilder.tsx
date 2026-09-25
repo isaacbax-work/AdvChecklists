@@ -13,6 +13,7 @@ import {
   type InstanceSummary,
   type SelectConfig,
   type TemplateDetail,
+  type TextConfig,
 } from "../api";
 import { DocumentCanvas } from "../components/DocumentCanvas";
 import { ActionListEditor } from "../components/ActionListEditor";
@@ -160,6 +161,20 @@ export function TemplateBuilder() {
     }
   };
 
+  const deleteTemplate = async () => {
+    if (!id) return;
+    const confirmed = window.confirm(
+      `Delete "${template.title}"? This permanently removes every version, field, collaborator, and checklist run under it. This can't be undone.`
+    );
+    if (!confirmed) return;
+    try {
+      await api.deleteTemplate(id);
+      navigate("/");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete template");
+    }
+  };
+
   const startInstance = async () => {
     if (!id) return;
     if (hasUnpublishedChanges) {
@@ -195,6 +210,11 @@ export function TemplateBuilder() {
             <span className="unpublished-badge">Unpublished changes — publish before starting a checklist</span>
           )}
           <button onClick={startInstance}>Start new checklist</button>
+          {isOwner && (
+            <button className="danger" onClick={deleteTemplate}>
+              Delete template
+            </button>
+          )}
         </div>
       </div>
 
@@ -377,6 +397,17 @@ function FieldEditor({
             value={((field.config as SelectConfig).options ?? []).join("\n")}
             onChange={(e) => onPatch({ config: { options: e.target.value.split("\n") } })}
           />
+        </label>
+      )}
+
+      {field.type === "TEXT" && (
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={(field.config as TextConfig).useAsTitle ?? false}
+            onChange={(e) => onPatch({ config: { useAsTitle: e.target.checked } })}
+          />
+          Use this field's value as the checklist's title
         </label>
       )}
 

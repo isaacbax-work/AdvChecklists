@@ -3,7 +3,14 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 import { getRole, roleAtLeast } from "../services/access.js";
-import { executeActions, type ActionDef, type CheckboxConfig, type ButtonConfig, type DateConfig } from "../services/actions.js";
+import {
+  executeActions,
+  type ActionDef,
+  type CheckboxConfig,
+  type ButtonConfig,
+  type DateConfig,
+  type TextConfig,
+} from "../services/actions.js";
 
 export const instancesRouter = Router();
 instancesRouter.use(requireAuth);
@@ -198,6 +205,15 @@ instancesRouter.patch("/:id/fields/:fieldId", async (req: AuthedRequest, res) =>
     update: { value: stringValue, updatedById: req.userId! },
   });
 
+  // A TEXT field marked "use as checklist title" keeps the instance's title in
+  // sync with whatever the filler types into it.
+  if (field.type === "TEXT") {
+    const config: TextConfig = JSON.parse(field.config);
+    if (config.useAsTitle && stringValue && stringValue.trim()) {
+      await prisma.instance.update({ where: { id: instance.id }, data: { title: stringValue.trim() } });
+    }
+  }
+
   let actionsToRun: ActionDef[] = [];
   if (field.type === "CHECKBOX") {
     const config: CheckboxConfig = JSON.parse(field.config);
@@ -220,6 +236,18 @@ instancesRouter.patch("/:id/fields/:fieldId", async (req: AuthedRequest, res) =>
     instanceStatus: refreshedInstance?.status,
     actionsTriggered: actionsToRun.map((a) => a.type),
   });
+});
+
+// Delete a checklist run entirely, along with its field values and action log.
+// Allowed for template editors/owners, or whoever started the run themselves.
+instancesRouter.delete("/:id", async (req: AuthedRequest, res) => {
+  const { instance, role } = await loadInstanceWithAccess(req.params.id, req.userId!);
+  if (!instance) return res.status(404).json({ error: "Instance not found" });
+  const canDelete = roleAtLeast(role, "EDITOR") || instance.createdById === req.userId;
+  if (!canDelete) return res.status(403).json({ error: "Access denied" });
+
+  await prisma.instance.delete({ where: { id: instance.id } });
+  res.status(204).end();
 });
 
 // Full action/audit history for an instance — every send_email / set_date / mark_complete

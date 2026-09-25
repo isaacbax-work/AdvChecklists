@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError, type FieldDef, type HistoryEntry, type InstanceDetail, type SelectConfig } from "../api";
 import { DocumentCanvas } from "../components/DocumentCanvas";
 
 export function InstanceView() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [instance, setInstance] = useState<InstanceDetail | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +20,18 @@ export function InstanceView() {
   useEffect(load, [id]);
 
   if (!instance) return <div>{error ?? "Loading…"}</div>;
+
+  const deleteInstance = async () => {
+    if (!id) return;
+    const confirmed = window.confirm(`Delete "${instance.title}"? This can't be undone.`);
+    if (!confirmed) return;
+    try {
+      await api.deleteInstance(id);
+      navigate("/in-progress");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete checklist");
+    }
+  };
 
   const setValue = async (fieldId: string, value: string | boolean | null) => {
     if (!id) return;
@@ -136,6 +149,9 @@ export function InstanceView() {
         </div>
         <div className="header-actions">
           <button onClick={() => window.print()}>Print / Save as PDF</button>
+          <button className="danger" onClick={deleteInstance}>
+            Delete checklist
+          </button>
         </div>
       </div>
 

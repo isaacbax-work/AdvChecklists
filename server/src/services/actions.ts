@@ -32,6 +32,10 @@ export interface SelectConfig {
   options?: string[];
 }
 
+export interface TextConfig {
+  useAsTitle?: boolean;
+}
+
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
