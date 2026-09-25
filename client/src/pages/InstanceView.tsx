@@ -53,15 +53,13 @@ export function InstanceView() {
 
     if (field.type === "CHECKBOX") {
       return (
-        <label className="fill-checkbox">
-          <input
-            type="checkbox"
-            disabled={busy}
-            checked={current === "true"}
-            onChange={(e) => setValue(field.id, e.target.checked)}
-          />
-          {field.label}
-        </label>
+        <input
+          type="checkbox"
+          className="fill-checkbox-bare"
+          disabled={busy}
+          checked={current === "true"}
+          onChange={(e) => setValue(field.id, e.target.checked)}
+        />
       );
     }
     if (field.type === "BUTTON") {
@@ -87,17 +85,19 @@ export function InstanceView() {
     if (field.type === "SELECT") {
       const options = ((field.config as SelectConfig).options ?? []).filter((o) => o.trim().length > 0);
       return (
-        <label className="fill-text">
-          <span>{field.label}</span>
-          <select disabled={busy} value={current ?? ""} onChange={(e) => setValue(field.id, e.target.value)}>
-            <option value="">Choose…</option>
-            {options.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
-        </label>
+        <select
+          className="fill-select-bare"
+          disabled={busy}
+          value={current ?? ""}
+          onChange={(e) => setValue(field.id, e.target.value)}
+        >
+          <option value="">Choose…</option>
+          {options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
       );
     }
     if (field.type === "NUMBER") {
