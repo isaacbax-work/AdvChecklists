@@ -5,6 +5,7 @@ import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Dashboard } from "./pages/Dashboard";
+import { InProgress } from "./pages/InProgress";
 import { TemplateBuilder } from "./pages/TemplateBuilder";
 import { InstanceView } from "./pages/InstanceView";
 
@@ -28,6 +29,7 @@ function AppRoutes() {
         }
       >
         <Route path="/" element={<Dashboard />} />
+        <Route path="/in-progress" element={<InProgress />} />
         <Route path="/templates/:id" element={<TemplateBuilder />} />
         <Route path="/instances/:id" element={<InstanceView />} />
       </Route>

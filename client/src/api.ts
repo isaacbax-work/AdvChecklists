@@ -87,6 +87,7 @@ export interface InstanceSummary {
   title: string;
   status: InstanceStatus;
   templateId: string;
+  templateTitle?: string;
   templateVersionId: string;
   createdAt: string;
   updatedAt: string;

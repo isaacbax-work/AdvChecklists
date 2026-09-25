@@ -137,6 +137,31 @@ label {
   color: var(--text);
   font-size: 1.1rem;
 }
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+.app-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+.app-tab {
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.app-tab:hover {
+  color: var(--text);
+  background: var(--bg);
+}
+.app-tab.active {
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
 .app-header-right {
   display: flex;
   align-items: center;

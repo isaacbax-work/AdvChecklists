@@ -1,4 +1,4 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export function Layout() {
@@ -6,9 +6,21 @@ export function Layout() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <Link to="/" className="brand">
-          AdvChecklists
-        </Link>
+        <div className="app-header-left">
+          <Link to="/" className="brand">
+            AdvChecklists
+          </Link>
+          {user && (
+            <nav className="app-tabs">
+              <NavLink to="/" end className={({ isActive }) => (isActive ? "app-tab active" : "app-tab")}>
+                Templates
+              </NavLink>
+              <NavLink to="/in-progress" className={({ isActive }) => (isActive ? "app-tab active" : "app-tab")}>
+                In progress
+              </NavLink>
+            </nav>
+          )}
+        </div>
         {user && (
           <div className="app-header-right">
             <span>{user.name}</span>

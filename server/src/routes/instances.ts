@@ -17,12 +17,14 @@ function serializeInstance(instance: {
   createdAt: Date;
   updatedAt: Date;
   createdBy?: { id: string; name: string; email: string };
+  template?: { title: string };
 }) {
   return {
     id: instance.id,
     title: instance.title,
     status: instance.status,
     templateId: instance.templateId,
+    templateTitle: instance.template?.title,
     templateVersionId: instance.templateVersionId,
     createdAt: instance.createdAt,
     updatedAt: instance.updatedAt,
@@ -102,7 +104,10 @@ instancesRouter.get("/", async (req: AuthedRequest, res) => {
   const instances = await prisma.instance.findMany({
     where: { templateId: { in: ids } },
     orderBy: { createdAt: "desc" },
-    include: { createdBy: { select: { id: true, name: true, email: true } } },
+    include: {
+      createdBy: { select: { id: true, name: true, email: true } },
+      template: { select: { title: true } },
+    },
   });
 
   res.json({ instances: instances.map(serializeInstance) });
