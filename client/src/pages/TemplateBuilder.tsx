@@ -57,6 +57,7 @@ export function TemplateBuilder() {
   const [saving, setSaving] = useState(false);
   const [replaceFile, setReplaceFile] = useState<File | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [publishedSnapshot, setPublishedSnapshot] = useState<string>("[]");
 
   const load = () => {
     if (!id) return;
@@ -64,7 +65,9 @@ export function TemplateBuilder() {
       .getTemplate(id)
       .then((t) => {
         setTemplate(t);
-        setFields(remapFieldsForEditing(t.currentVersion.fields));
+        const remapped = remapFieldsForEditing(t.currentVersion.fields);
+        setFields(remapped);
+        setPublishedSnapshot(JSON.stringify(remapped));
         setReloadKey((k) => k + 1);
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load template"));
@@ -77,6 +80,7 @@ export function TemplateBuilder() {
 
   const canEdit = template.myRole === "OWNER" || template.myRole === "EDITOR";
   const isOwner = template.myRole === "OWNER";
+  const hasUnpublishedChanges = canEdit && JSON.stringify(fields) !== publishedSnapshot;
   const selectedField = fields.find((f) => f.id === selectedId) ?? null;
   const dateFieldOptions = fields.filter((f) => f.type === "DATE").map((f) => ({ id: f.id, label: f.label }));
   const fieldOptions = fields.map((f) => ({ id: f.id, label: f.label }));
@@ -142,6 +146,13 @@ export function TemplateBuilder() {
 
   const startInstance = async () => {
     if (!id) return;
+    if (hasUnpublishedChanges) {
+      const proceed = window.confirm(
+        "You have field changes that haven't been published yet — this checklist would start without them. " +
+          "Click Cancel, then \"Publish new version\" first, or click OK to start anyway using the last published version."
+      );
+      if (!proceed) return;
+    }
     const title = window.prompt("Name this checklist run", `${template.title} - ${new Date().toLocaleDateString()}`);
     if (!title) return;
     try {
@@ -164,6 +175,9 @@ export function TemplateBuilder() {
           <p className="muted small">Your role: {template.myRole}</p>
         </div>
         <div className="header-actions">
+          {hasUnpublishedChanges && (
+            <span className="unpublished-badge">Unpublished changes — publish before starting a checklist</span>
+          )}
           <button onClick={startInstance}>Start new checklist</button>
         </div>
       </div>
