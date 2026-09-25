@@ -15,6 +15,7 @@ import {
 } from "../api";
 import { DocumentCanvas } from "../components/DocumentCanvas";
 import { ActionListEditor } from "../components/ActionListEditor";
+import { uuid } from "../uuid";
 
 /**
  * Every published version gets brand-new Field rows (so old versions stay
@@ -24,7 +25,7 @@ import { ActionListEditor } from "../components/ActionListEditor";
  * the server and become the new rows' real ids.
  */
 function remapFieldsForEditing(fields: FieldDef[]): FieldDef[] {
-  const idMap = new Map(fields.map((f) => [f.id, crypto.randomUUID()]));
+  const idMap = new Map(fields.map((f) => [f.id, uuid()]));
   const remapActions = (actions: ActionDef[] | undefined): ActionDef[] | undefined =>
     actions?.map((a) =>
       a.type === "set_date" ? { ...a, targetFieldId: idMap.get(a.targetFieldId) ?? a.targetFieldId } : a
@@ -83,7 +84,7 @@ export function TemplateBuilder() {
   const addField = (xPercent: number, yPercent: number) => {
     if (!canEdit) return;
     const newField: FieldDef = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       type: "CHECKBOX",
       label: "New field",
       page: 1,
