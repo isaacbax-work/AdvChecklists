@@ -5,16 +5,18 @@ interface Props {
   actions: ActionDef[];
   onChange: (actions: ActionDef[]) => void;
   dateFieldOptions: { id: string; label: string }[];
+  textFieldOptions: { id: string; label: string }[];
   fieldOptions: { id: string; label: string }[];
 }
 
 function defaultForType(type: ActionDef["type"]): ActionDef {
   if (type === "send_email") return { type, to: "", subject: "", body: "" };
   if (type === "set_date") return { type, targetFieldId: "", value: "today" };
+  if (type === "set_text") return { type, targetFieldId: "", value: "" };
   return { type: "mark_complete" };
 }
 
-export function ActionListEditor({ actions, onChange, dateFieldOptions, fieldOptions }: Props) {
+export function ActionListEditor({ actions, onChange, dateFieldOptions, textFieldOptions, fieldOptions }: Props) {
   const update = (index: number, next: ActionDef) => {
     const copy = actions.slice();
     copy[index] = next;
@@ -51,6 +53,27 @@ export function ActionListEditor({ actions, onChange, dateFieldOptions, fieldOpt
               <span className="hint">to today's date</span>
             </div>
           )}
+          {action.type === "set_text" && (
+            <div className="action-fields">
+              <span className="action-badge">Set text field</span>
+              <select
+                value={action.targetFieldId}
+                onChange={(e) => update(i, { ...action, targetFieldId: e.target.value })}
+              >
+                <option value="">Choose a text or dropdown field…</option>
+                {textFieldOptions.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                placeholder="Value (supports {{today}}, {{instanceTitle}}, {{fieldLabel}}, {{field:Label}})"
+                value={action.value}
+                onChange={(e) => update(i, { ...action, value: e.target.value })}
+              />
+            </div>
+          )}
           {action.type === "mark_complete" && (
             <div className="action-fields">
               <span className="action-badge">Mark the checklist as complete</span>
@@ -67,6 +90,9 @@ export function ActionListEditor({ actions, onChange, dateFieldOptions, fieldOpt
         </button>
         <button type="button" onClick={() => add("set_date")}>
           + Set date field
+        </button>
+        <button type="button" onClick={() => add("set_text")}>
+          + Set text field
         </button>
         <button type="button" onClick={() => add("mark_complete")}>
           + Mark complete

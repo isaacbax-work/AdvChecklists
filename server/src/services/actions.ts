@@ -12,6 +12,7 @@ export interface EmailAttachmentRef {
 export type ActionDef =
   | { type: "send_email"; to: string; subject: string; body: string; attachments?: EmailAttachmentRef[] }
   | { type: "set_date"; targetFieldId: string; value?: string }
+  | { type: "set_text"; targetFieldId: string; value: string }
   | { type: "mark_complete" };
 
 export interface CheckboxConfig {
@@ -25,6 +26,10 @@ export interface ButtonConfig {
 
 export interface DateConfig {
   autoFillToday?: boolean;
+}
+
+export interface SelectConfig {
+  options?: string[];
 }
 
 function todayIso(): string {
@@ -112,6 +117,28 @@ export async function executeActions(
           actionType: "set_date",
           status: "SUCCESS",
           detail: `Set field ${action.targetFieldId} to ${value}`,
+          performedById: ctx.userId,
+        },
+      });
+    } else if (action.type === "set_text") {
+      const value = interpolate(action.value, vars, fieldVars);
+      await prisma.fieldValue.upsert({
+        where: { instanceId_fieldId: { instanceId: ctx.instance.id, fieldId: action.targetFieldId } },
+        create: {
+          instanceId: ctx.instance.id,
+          fieldId: action.targetFieldId,
+          value,
+          updatedById: ctx.userId,
+        },
+        update: { value, updatedById: ctx.userId },
+      });
+      await prisma.actionLog.create({
+        data: {
+          instanceId: ctx.instance.id,
+          fieldId: ctx.field.id,
+          actionType: "set_text",
+          status: "SUCCESS",
+          detail: `Set field ${action.targetFieldId} to ${JSON.stringify(value)}`,
           performedById: ctx.userId,
         },
       });

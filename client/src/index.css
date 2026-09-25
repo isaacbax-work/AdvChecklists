@@ -281,6 +281,38 @@ label {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(36, 84, 255, 0.3);
 }
+.doc-field-draggable {
+  cursor: move;
+}
+.doc-field-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  z-index: 1;
+}
+.doc-field-handle-top-left {
+  top: -5px;
+  left: -5px;
+  cursor: nwse-resize;
+}
+.doc-field-handle-top-right {
+  top: -5px;
+  right: -5px;
+  cursor: nesw-resize;
+}
+.doc-field-handle-bottom-left {
+  bottom: -5px;
+  left: -5px;
+  cursor: nesw-resize;
+}
+.doc-field-handle-bottom-right {
+  bottom: -5px;
+  right: -5px;
+  cursor: nwse-resize;
+}
 .doc-field-button {
   background: transparent;
 }

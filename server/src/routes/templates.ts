@@ -10,7 +10,7 @@ templatesRouter.use(requireAuth);
 
 const fieldSchema = z.object({
   id: z.string().optional(), // present when editing an existing field, ignored on create
-  type: z.enum(["CHECKBOX", "BUTTON", "DATE", "TEXT"]),
+  type: z.enum(["CHECKBOX", "BUTTON", "DATE", "TEXT", "SELECT", "NUMBER"]),
   label: z.string().min(1),
   page: z.number().int().min(1).default(1),
   x: z.number(),

@@ -1,4 +1,4 @@
-export type FieldType = "CHECKBOX" | "BUTTON" | "DATE" | "TEXT";
+export type FieldType = "CHECKBOX" | "BUTTON" | "DATE" | "TEXT" | "SELECT" | "NUMBER";
 export type Role = "OWNER" | "EDITOR" | "FILLER";
 export type InstanceStatus = "IN_PROGRESS" | "COMPLETED";
 
@@ -12,6 +12,7 @@ export interface EmailAttachment {
 export type ActionDef =
   | { type: "send_email"; to: string; subject: string; body: string; attachments?: EmailAttachment[] }
   | { type: "set_date"; targetFieldId: string; value?: string }
+  | { type: "set_text"; targetFieldId: string; value: string }
   | { type: "mark_complete" };
 
 export interface CheckboxConfig {
@@ -24,6 +25,9 @@ export interface ButtonConfig {
 export interface DateConfig {
   autoFillToday?: boolean;
 }
+export interface SelectConfig {
+  options?: string[];
+}
 
 export interface FieldDef {
   id: string;
@@ -35,7 +39,7 @@ export interface FieldDef {
   width: number;
   height: number;
   order: number;
-  config: CheckboxConfig | ButtonConfig | DateConfig | Record<string, unknown>;
+  config: CheckboxConfig | ButtonConfig | DateConfig | SelectConfig | Record<string, unknown>;
 }
 
 export interface TemplateVersion {

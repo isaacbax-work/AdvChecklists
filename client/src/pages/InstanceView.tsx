@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, ApiError, type FieldDef, type HistoryEntry, type InstanceDetail } from "../api";
+import { api, ApiError, type FieldDef, type HistoryEntry, type InstanceDetail, type SelectConfig } from "../api";
 import { DocumentCanvas } from "../components/DocumentCanvas";
 
 export function InstanceView() {
@@ -67,6 +67,35 @@ export function InstanceView() {
             disabled={busy}
             value={current ?? ""}
             onChange={(e) => setValue(field.id, e.target.value)}
+          />
+        </label>
+      );
+    }
+    if (field.type === "SELECT") {
+      const options = ((field.config as SelectConfig).options ?? []).filter((o) => o.trim().length > 0);
+      return (
+        <label className="fill-text">
+          <span>{field.label}</span>
+          <select disabled={busy} value={current ?? ""} onChange={(e) => setValue(field.id, e.target.value)}>
+            <option value="">Choose…</option>
+            {options.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+        </label>
+      );
+    }
+    if (field.type === "NUMBER") {
+      return (
+        <label className="fill-text">
+          <span>{field.label}</span>
+          <input
+            type="number"
+            disabled={busy}
+            defaultValue={current ?? ""}
+            onBlur={(e) => setValue(field.id, e.target.value)}
           />
         </label>
       );

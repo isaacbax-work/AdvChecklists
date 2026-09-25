@@ -11,6 +11,7 @@ import {
   type FieldDef,
   type FieldType,
   type InstanceSummary,
+  type SelectConfig,
   type TemplateDetail,
 } from "../api";
 import { DocumentCanvas } from "../components/DocumentCanvas";
@@ -83,6 +84,9 @@ export function TemplateBuilder() {
   const hasUnpublishedChanges = canEdit && JSON.stringify(fields) !== publishedSnapshot;
   const selectedField = fields.find((f) => f.id === selectedId) ?? null;
   const dateFieldOptions = fields.filter((f) => f.type === "DATE").map((f) => ({ id: f.id, label: f.label }));
+  const textFieldOptions = fields
+    .filter((f) => f.type === "TEXT" || f.type === "SELECT")
+    .map((f) => ({ id: f.id, label: f.label }));
   const fieldOptions = fields.map((f) => ({ id: f.id, label: f.label }));
 
   const addField = (xPercent: number, yPercent: number) => {
@@ -103,9 +107,13 @@ export function TemplateBuilder() {
     setSelectedId(newField.id);
   };
 
+  const updateField = (fieldId: string, patch: Partial<FieldDef>) => {
+    setFields((prev) => prev.map((f) => (f.id === fieldId ? { ...f, ...patch } : f)));
+  };
+
   const updateSelected = (patch: Partial<FieldDef>) => {
     if (!selectedId) return;
-    setFields((prev) => prev.map((f) => (f.id === selectedId ? { ...f, ...patch } : f)));
+    updateField(selectedId, patch);
   };
 
   const changeType = (type: FieldType) => {
@@ -114,7 +122,15 @@ export function TemplateBuilder() {
       prev.map((f) => {
         if (f.id !== selectedId) return f;
         const config: FieldDef["config"] =
-          type === "CHECKBOX" ? {} : type === "BUTTON" ? { actions: [] } : type === "DATE" ? { autoFillToday: false } : {};
+          type === "CHECKBOX"
+            ? {}
+            : type === "BUTTON"
+              ? { actions: [] }
+              : type === "DATE"
+                ? { autoFillToday: false }
+                : type === "SELECT"
+                  ? { options: [] }
+                  : {};
         return { ...f, type, config };
       })
     );
@@ -194,6 +210,7 @@ export function TemplateBuilder() {
             selectedFieldId={selectedId}
             onSelectField={canEdit ? setSelectedId : undefined}
             onCanvasClick={canEdit ? addField : undefined}
+            onFieldChange={canEdit ? updateField : undefined}
             renderField={(f) => <span className="doc-field-label">{f.label}</span>}
           />
           {canEdit && (
@@ -221,6 +238,7 @@ export function TemplateBuilder() {
                 key={selectedField.id}
                 field={selectedField}
                 dateFieldOptions={dateFieldOptions.filter((d) => d.id !== selectedField.id)}
+                textFieldOptions={textFieldOptions.filter((d) => d.id !== selectedField.id)}
                 fieldOptions={fieldOptions}
                 onChangeType={changeType}
                 onPatch={updateSelected}
@@ -251,6 +269,7 @@ export function TemplateBuilder() {
 function FieldEditor({
   field,
   dateFieldOptions,
+  textFieldOptions,
   fieldOptions,
   onChangeType,
   onPatch,
@@ -258,6 +277,7 @@ function FieldEditor({
 }: {
   field: FieldDef;
   dateFieldOptions: { id: string; label: string }[];
+  textFieldOptions: { id: string; label: string }[];
   fieldOptions: { id: string; label: string }[];
   onChangeType: (type: FieldType) => void;
   onPatch: (patch: Partial<FieldDef>) => void;
@@ -277,6 +297,8 @@ function FieldEditor({
           <option value="BUTTON">Button</option>
           <option value="DATE">Date</option>
           <option value="TEXT">Text</option>
+          <option value="SELECT">Dropdown</option>
+          <option value="NUMBER">Number</option>
         </select>
       </label>
       <div className="grid-2">
@@ -304,6 +326,7 @@ function FieldEditor({
           <ActionListEditor
             actions={(field.config as CheckboxConfig).checkedActions ?? []}
             dateFieldOptions={dateFieldOptions}
+            textFieldOptions={textFieldOptions}
             fieldOptions={fieldOptions}
             onChange={(actions) =>
               onPatch({ config: { ...(field.config as CheckboxConfig), checkedActions: actions } })
@@ -313,6 +336,7 @@ function FieldEditor({
           <ActionListEditor
             actions={(field.config as CheckboxConfig).uncheckedActions ?? []}
             dateFieldOptions={dateFieldOptions}
+            textFieldOptions={textFieldOptions}
             fieldOptions={fieldOptions}
             onChange={(actions) =>
               onPatch({ config: { ...(field.config as CheckboxConfig), uncheckedActions: actions } })
@@ -327,6 +351,7 @@ function FieldEditor({
           <ActionListEditor
             actions={(field.config as ButtonConfig).actions ?? []}
             dateFieldOptions={dateFieldOptions}
+            textFieldOptions={textFieldOptions}
             fieldOptions={fieldOptions}
             onChange={(actions) => onPatch({ config: { actions } })}
           />
@@ -341,6 +366,17 @@ function FieldEditor({
             onChange={(e) => onPatch({ config: { autoFillToday: e.target.checked } })}
           />
           Auto-fill with today's date on new checklists
+        </label>
+      )}
+
+      {field.type === "SELECT" && (
+        <label>
+          Dropdown options (one per line)
+          <textarea
+            rows={4}
+            value={((field.config as SelectConfig).options ?? []).join("\n")}
+            onChange={(e) => onPatch({ config: { options: e.target.value.split("\n") } })}
+          />
         </label>
       )}
 
